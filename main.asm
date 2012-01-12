@@ -13,10 +13,7 @@
 	
 
 	
-pin_SER			equ 0
-pin_SERCLK		equ 1
-pin_RCLK		equ 2
-
+pin_LED			equ 0
 
 reset_vector	code	0x0
 		goto start
@@ -51,33 +48,41 @@ int_vector		code	0x4
 main_prog	code
 
 ;--------------------------------
-idle
+task_idle
 		retlw 0
 
 ;-----------------------------
-pin_SER_on
-		bsf		GPIO, pin_SER
-		bsf		GPIO, pin_SERCLK
-		bcf		GPIO, pin_SERCLK
-		incf 	led_delay, f
-		movfw	led_delay
+task_pin_LED_on
+		bsf		GPIO, pin_LED
+		movlw	150  ; delay 150 ticks
 		movwf	timer_delay
-		movlw TS_pin_debug_off
+		movlw TASKID_pin_LED_off
 		call	add_timer_task
 		retlw 0
 		
-;-------------------------
-byte_out
+;-----------------------------
+task_pin_LED_off
+		bcf		GPIO, pin_LED
+		movlw	150  ; delay 150 ticks
+		movwf	timer_delay
+		movlw TASKID_pin_LED_on
+		call	add_timer_task
 		retlw 0
+		
 
+;--------------------------------------
+;  Table of tasks
 ;--------------------------------------
 TaskProcs
 
-TS_idle equ 0
-		goto	idle
+TASKID_idle equ 0	; idle task with id=0 must always be present
+		goto	task_idle
 
-TS_pin_debug_on equ 1
-		goto	pin_debug_on
+TASKID_pin_LED_on equ 1
+		goto	task_pin_LED_on
+		
+TASKID_pin_LED_off equ 2
+		goto	task_pin_LED_off
 		
 
 	global TaskProcs
@@ -93,11 +98,10 @@ init_hw
 	banksel OPTION_REG
 	movwf	OPTION_REG
 
-	clrf TRISIO				;GP0 - strobe
-	movlw b'11001011'		;GP1 - data
-	movwf TRISIO				;GP2 - clock
+	clrf TRISIO				; all GPx is output
+	movwf TRISIO				
 
-	bcf		STATUS, RP0
+	banksel GPIO
 	
 	bsf INTCON, T0IE
 	bsf INTCON, GIE
@@ -108,10 +112,8 @@ init_hw
 start
 		call init_timer_queue
 		
-;		movlw TS_pin_debug_on
-;		call add_task
-		movlw b'01010101'
-		call byte_out
+		movlw TASKID_pin_LED_on
+		call add_task
 			
 			
 		call init_hw

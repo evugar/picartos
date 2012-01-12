@@ -56,7 +56,7 @@ tail_at_end
 at_proceed
 
 		retlw 0		
-;--------------------------------------
+
 
 ;------------------------------
 process_queue
@@ -95,15 +95,14 @@ timer_delay res 1
 timer_task res 1
 tp_cur_entry res 1
 tp_save_task_id res 1
-timer_queue res timer_queue_size * 2
+timer_queue res timer_queue_size * 2  ; 1 byte for TASKID and 1 byte for timer delay value
 
 	global timer_delay
 
-;	global att_temp1, timer_delay, timer_task, tp_cur_entry 
-;	global tp_save_task_id, timer_queue 
-;
 
 timq_proc		code
+
+
 ;------------------------
 add_timer_task
 		movwf	timer_task
