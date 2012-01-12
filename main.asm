@@ -6,7 +6,7 @@
 
 	#include macros.inc
 
-	extern add_task, process_queue, do_task
+	extern add_task, process_queue
 
 	extern timer_delay
 	extern add_timer_task, timer_process, init_timer_queue

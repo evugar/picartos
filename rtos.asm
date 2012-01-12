@@ -83,7 +83,7 @@ pq_not_empty
 ;-------------------------------------
 
 
-	global add_task, process_queue, do_task
+	global add_task, process_queue
 
 
 
