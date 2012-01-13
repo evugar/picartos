@@ -23,7 +23,12 @@ _save_w res 1
 _save_FSR res 1
 _save_STATUS res 1
 
-		
+task_delay_data udata
+delay_count res 1
+taskid_to_proceed res 1
+
+
+;***TODO: Save PCLATH?
 int_vector		code	0x4
 		
 		movwf _save_w ;copy W to temp register, could be in either bank
@@ -47,28 +52,54 @@ int_vector		code	0x4
 
 main_prog	code
 
+
 ;--------------------------------
 task_idle
 		retlw 0
 
+
 ;-----------------------------
 task_pin_LED_on
 		bsf		GPIO, pin_LED
-		movlw	150  ; delay 150 ticks
-		movwf	timer_delay
-		movlw TASKID_pin_LED_off
-		call	add_timer_task
+
+		movlw	10
+		movwf	delay_count
+		movlw	TASKID_pin_LED_off
+		movwf	taskid_to_proceed
+
+		movlw TASKID_delay
+		call	add_task
 		retlw 0
+
 		
 ;-----------------------------
 task_pin_LED_off
 		bcf		GPIO, pin_LED
-		movlw	150  ; delay 150 ticks
-		movwf	timer_delay
-		movlw TASKID_pin_LED_on
-		call	add_timer_task
+
+		movlw	10
+		movwf	delay_count
+		movlw	TASKID_pin_LED_on
+		movwf	taskid_to_proceed
+
+		movlw TASKID_delay
+		call	add_task
+		retlw 0
+
+;-----------------------------
+task_delay
+		decfsz delay_count, f
+		goto task_delay_not_yet
+
+		movfw	taskid_to_proceed
+		call	add_task
 		retlw 0
 		
+task_delay_not_yet
+		movlw	100  ; delay x ticks
+		movwf	timer_delay
+		movlw TASKID_delay
+		call	add_timer_task
+		retlw 0
 
 ;--------------------------------------
 ;  Table of tasks
@@ -83,6 +114,9 @@ TASKID_pin_LED_on equ 1
 		
 TASKID_pin_LED_off equ 2
 		goto	task_pin_LED_off
+		
+TASKID_delay equ 3
+		goto	task_delay
 		
 
 	global TaskProcs
