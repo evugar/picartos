@@ -18,8 +18,8 @@ pin_LED			equ 0
 reset_vector	code	0x0
 		goto start
 
-int_save_reg		udata
-_save_w res 1
+int_save_reg		udata   ; everething is shared across banks in 12f629
+_save_W res 1                   ; udata_shr not supported
 _save_FSR res 1
 _save_STATUS res 1
 
@@ -31,7 +31,7 @@ taskid_to_proceed res 1
 ;***TODO: Save PCLATH?
 int_vector		code	0x4
 		
-		movwf _save_w ;copy W to temp register, could be in either bank
+		movwf _save_W ;copy W to temp register, could be in either bank
 		swapf STATUS, w ;swap status to be saved into W
 		movwf _save_STATUS ;save status to bank 0 register
 		movfw FSR
@@ -43,8 +43,8 @@ int_vector		code	0x4
 		movwf FSR
 		swapf _save_STATUS, w ;swap STATUS_TEMP register into W, sets bank to original state
 		movwf STATUS ;move W into STATUS register
-		swapf _save_w,F ;swap W_TEMP
-		swapf _save_w,W ;swap W_TEMP into W		
+		swapf _save_W,F ;swap W_TEMP
+		swapf _save_W,W ;swap W_TEMP into W
 
 		bcf INTCON, T0IF
 		
@@ -62,7 +62,7 @@ task_idle
 task_pin_LED_on
 		bsf		GPIO, pin_LED
 
-		movlw	10
+		movlw	3
 		movwf	delay_count
 		movlw	TASKID_pin_LED_off
 		movwf	taskid_to_proceed
@@ -76,7 +76,7 @@ task_pin_LED_on
 task_pin_LED_off
 		bcf		GPIO, pin_LED
 
-		movlw	10
+		movlw	3
 		movwf	delay_count
 		movlw	TASKID_pin_LED_on
 		movwf	taskid_to_proceed
@@ -126,7 +126,6 @@ TASKID_delay equ 3
 				
 ;----------------------------------
 init_hw
-	bsf		STATUS, RP0
 
 	movlw b'00000000'		; prescaler 
 	banksel OPTION_REG

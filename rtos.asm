@@ -112,7 +112,7 @@ att_loop1
 		movfw	att_temp1
 		movwf	FSR
 		movfw	INDF
-		xorlw 0xff
+		xorlw 0xff			;0xFF -> empty cell
 		jne	att_next_cell
 		movfw	att_temp1
 ;		bcf INTCON, GIE
@@ -141,7 +141,7 @@ tp_loop1
 		movfw tp_cur_entry
 		movwf FSR
 		movfw INDF
-		xorlw 0xff
+		xorlw 0xff		;0xFF -> empty cell
 		je tp_wait_more
 		incf FSR,f
 		decfsz INDF,f
@@ -168,7 +168,7 @@ init_timer_queue
 itq_loop1		
 		movfw temp1
 		movwf FSR
-		movlw 0xff
+		movlw 0xff		; init with empty marker (0xFF)
 		movwf INDF
 		incf temp1, f
 		movfw temp1
