@@ -17,23 +17,27 @@ offset_low	res	1
 
 addtsk_temp1 res 1
 pq_temp res 1
-queue_head	res 1
-queue_tail	res 1
+task_queue_head	res 1
+task_queue_tail	res 1
 task_queue	res	queue_size
 
 tskq_proc	code
 
+
+
+
 ;------------------------------------
 do_task
-		movwf	offset_low
-		movlw 	LOW TaskProcs
-		addwf	offset_low, f
-		movlw	HIGH TaskProcs
-		btfsc	STATUS, C
-		addlw	1
-		movwf	PCLATH
-		movfw	offset_low
-		movwf	PCL
+
+                movwf offset_low
+                movlw HIGH TaskProcs        ;get high 8 bits of Table address
+                movwf PCLATH            ;save to PCLATH (may not be correct, yet)
+                movlw LOW TaskProcs         ;get Table low address
+                addwf offset_low,W          ;add value of offset, keep result in W
+                                        ;if page is crossed, carry will be set
+                sknc          ;check page crossed? Skip next if NO
+                incf PCLATH             ;yes, increment PCLATH
+                movwf PCL
 
 
 
@@ -41,18 +45,18 @@ do_task
 add_task
 		movwf	addtsk_temp1
 		movlw	task_queue
-		addwf	queue_tail, w
+		addwf	task_queue_tail, w
 		movwf	FSR
 		movfw	addtsk_temp1
 		movwf	INDF
 
-		movfw	queue_tail
+		movfw	task_queue_tail
 		xorlw	queue_size-1
 		je		tail_at_end
-		incf	queue_tail,f
+		incf	task_queue_tail,f
 		goto at_proceed
 tail_at_end
-		clrf	queue_tail
+		clrf	task_queue_tail
 at_proceed
 
 		retlw 0		
@@ -60,24 +64,24 @@ at_proceed
 
 ;------------------------------
 process_queue
-		movfw	queue_head
-		subwf	queue_tail, w
+		movfw	task_queue_head
+		subwf	task_queue_tail, w
 		jne	pq_not_empty
 		call do_task  ; W already = 0 so run idle process (TS_idle)
 		retlw 0
 
 pq_not_empty
 		movlw	task_queue
-		addwf queue_head, w
+		addwf task_queue_head, w
 		movwf FSR
 		movfw INDF
 		call do_task
 	
-		incf queue_head, f
-		movfw queue_head
+		incf task_queue_head, f
+		movfw task_queue_head
 		xorlw queue_size
 		skne
-		clrf queue_head
+		clrf task_queue_head
 		
 		retlw 0
 ;-------------------------------------
