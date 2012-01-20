@@ -7,15 +7,21 @@
 
 	extern TaskProcs
 
-	udata_ovr
+shared_vars	udata_ovr
 temp1 res 1
+
+shared_vars	udata_ovr
+att_temp1 res 1
+
+shared_vars	udata_ovr
+addtsk_temp1 res 1
+
 
 queue_size	equ	10
 
 tskq_data		udata
 offset_low	res	1
 
-addtsk_temp1 res 1
 pq_temp res 1
 task_queue_head	res 1
 task_queue_tail	res 1
@@ -30,9 +36,9 @@ tskq_proc	code
 do_task
 
                 movwf offset_low
-                movlw HIGH TaskProcs        ;get high 8 bits of Table address
+                movlw HIGH TaskProcs        ;get high 8 bits of TaskProcs address
                 movwf PCLATH            ;save to PCLATH (may not be correct, yet)
-                movlw LOW TaskProcs         ;get Table low address
+                movlw LOW TaskProcs         ;get TaskProcs low address
                 addwf offset_low,W          ;add value of offset, keep result in W
                                         ;if page is crossed, carry will be set
                 sknc          ;check page crossed? Skip next if NO
@@ -94,7 +100,6 @@ pq_not_empty
 timer_queue_size	equ	5
 
 timq_data	udata
-att_temp1 res 1
 timer_delay res 1
 timer_task res 1
 tp_cur_entry res 1
@@ -146,10 +151,10 @@ tp_loop1
 		movwf FSR
 		movfw INDF
 		xorlw 0xff		;0xFF -> empty cell
-		je tp_wait_more
+		je tp_next_elem
 		incf FSR,f
 		decfsz INDF,f
-		goto tp_wait_more
+		goto tp_next_elem
 		decf FSR,f
 		movfw INDF
 		movwf tp_save_task_id
@@ -157,7 +162,7 @@ tp_loop1
 		movwf INDF
 		movfw tp_save_task_id
 		call add_task
-tp_wait_more
+tp_next_elem
 		incf tp_cur_entry, f
 		incf tp_cur_entry, f
 		movfw tp_cur_entry
